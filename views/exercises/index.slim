@@ -1,0 +1,13 @@
+h1 All Exercises
+
+a href="/exercises/new" Add new exercises
+
+ol
+  - exercises.each do |exercises|
+    li 
+      a href="exercises/#{exercises['id']}" #{exercises["exercise"]}
+      a href="exercises/#{exercises['id']}/edit" Uppdatera
+      form method="POST" action="exercises/#{exercises['id']}/delete"
+        input type="submit" value="Delete"
+      
+            

@@ -1,0 +1,12 @@
+h1 Your Schedules
+
+a href="/schedules/new" Create New Schedule
+
+ol
+  - schedules.each do |schedules|
+    li 
+      a href="schedules/#{schedules['id']}" #{schedules["name"]}
+      a href="schedules/#{schedules['id']}/edit" Ändra Schema
+      form method="POST" action="schedules/#{schedules['id']}/delete"
+        input type="submit" value="Delete"
+          

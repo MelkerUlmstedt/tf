@@ -1,0 +1,7 @@
+form action="/exercises/#{result['id']}/update" method="post"
+    input type="text" name="exercise" value="#{result['exercise']}"
+    input type="number" name="primary_muscle_id" value="#{result['primary_muscle_id']}"
+    input type="number" name="secondary_muscle_id" value="#{result['secondary_muscle_id']}"
+    input type="number" name="third_muscle_id" value="#{result['third_muscle_id']}"
+    input type="hidden" name="id" value="#{result['id']}"
+    input type="submit" value="Edit"
