@@ -6,7 +6,7 @@ ol
   - schedules.each do |schedules|
     li 
       a href="schedules/#{schedules['id']}" #{schedules["name"]}
-      a href="schedules/#{schedules['id']}/edit" Ändra Schema
+      a href="schedules/#{schedules['id']}/edit" Edit Schedule
       form method="POST" action="schedules/#{schedules['id']}/delete"
         input type="submit" value="Delete"
           

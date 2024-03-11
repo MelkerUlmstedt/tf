@@ -29,14 +29,40 @@ post('/schedules/new') do
     redirect('/schedules')
 end
 
+post('/schedules/:id/delete') do
+    id = params[:id].to_i
+    db = SQLite3::Database.new("db/database.db")
+    db.execute("DELETE FROM Schedule WHERE id = ?",id)
+    redirect('/schedules')
+end
+
+post('/schedules/:id/update') do
+  id = params[:id].to_i
+  name = params[:name]
+  db = SQLite3::Database.new("db/database.db")
+  db.execute("UPDATE Schedule SET name=? WHERE id = ?", name,id)
+  redirect('/schedules')
+end
+
+get('/schedules/:id/edit') do
+  id = params[:id].to_i
+  db = SQLite3::Database.new("db/database.db")
+  db.results_as_hash = true
+  result = db.execute("SELECT * FROM Schedule WHERE id = ?",id).first
+  slim(:"/schedules/edit",locals:{result:result})
+end
+
 get('/schedules/:id') do
     id = params[:id].to_i
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
     result = db.execute("SELECT * FROM Schedule WHERE id = ?",id).first
-    result2 = db.execute("SELECT Name FROM Schedule WHERE id IN (SELECT id FROM Schedule WHERE id = ?)", id).first
-    slim(:"schedules/show",locals:{result:result,result2:result2})
+    slim(:"schedules/show",locals:{result:result})
 end
+
+
+
+
 
 #Exercises
 get('/exercises') do
@@ -59,7 +85,6 @@ post('/exercises/new') do
   db.execute("INSERT INTO Exercises (exercise,primary_muscle_id,secondary_muscle_id,third_muscle_id) VALUES (?,?,?,?)",exercise,primary_muscle_id,secondary_muscle_id,third_muscle_id)
   redirect('/exercises')
 end
-
 
 post('/exercises/:id/delete') do
   id = params[:id].to_i
@@ -92,7 +117,7 @@ get('/exercises/:id') do
   db = SQLite3::Database.new("db/database.db")
   db.results_as_hash = true
   result = db.execute("SELECT * FROM Exercises WHERE id = ?",id).first
-  result2 = db.execute("SELECT Name FROM MuscleTypes WHERE id IN (SELECT primary_muscle_id FROM Exercises WHERE id = ?)",id).first
+  result2 = db.execute("SELECT Name FROM MuscleTypes WHERE id IN (SELECT id FROM Exercises WHERE id = ?)",id).first
   slim(:"exercises/show",locals:{result:result,result2:result2})
 end
     
