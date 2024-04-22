@@ -3,7 +3,7 @@ h1 All Exercises
 a href="/exercises/new" Add new exercises
 
 ol
-  - exercises.each do |exercises|
+  - @result.each do |exercises|
     li 
       a href="exercises/#{exercises['exercise_id']}" #{exercises["exercise_name"]}
       a href="exercises/#{exercises['exercise_id']}/edit" Edit

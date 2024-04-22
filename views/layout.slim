@@ -13,5 +13,8 @@ html lang="en"
       a href="/schedules" Dina scheman
       a href="/" Log Out
     
-
+    -if flash[:notice] 
+      p.notice = flash[:notice]
     == yield
+
+script src='js/main.js'

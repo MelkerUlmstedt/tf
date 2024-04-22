@@ -3,24 +3,25 @@ require 'slim'
 require 'sqlite3'
 require 'bcrypt'
 require 'sinatra/reloader'
+require 'sinatra/flash'
 
 enable :sessions
 
   
 get('/') do
-    slim(:login)
+    slim(:'/user/login')
 end 
 
 get('/register') do
-    slim(:register)
+    slim(:"/user/new")
 end
 
 get('/main') do
     id = session[:id].to_i
     db = SQLite3::Database.new('db/database.db')
     db.results_as_hash = true
-    result = db.execute("SELECT * FROM User WHERE user_id = ?",id).first
-    slim(:start,locals:{result:result})
+    @result = db.execute("SELECT * FROM User WHERE user_id = ?",id).first
+    slim(:index)
 end
 
 post('/login') do
@@ -29,14 +30,20 @@ post('/login') do
     db = SQLite3::Database.new('db/database.db')
     db.results_as_hash = true
     result = db.execute("SELECT * FROM User WHERE username = ?",username).first
-    pwdigest = result["pwdigest"]
-    id = result["user_id"]
   
-    if BCrypt::Password.new(pwdigest) == password
-      session[:id] = id
-      redirect('/main')
+    if result == nil
+        flash[:notice] = "Användarnamnet existerar ej"
+        redirect('/')
     else
-      "FEL LÖSENORD"
+        pwdigest = result["pwdigest"]
+        id = result["user_id"]
+        if BCrypt::Password.new(pwdigest) == password
+        session[:id] = id
+        redirect('/main')
+        else
+            flash[:notice] = "Fel lösenord"
+            redirect('/')
+        end
     end
 end
 
@@ -51,7 +58,8 @@ post('/users/new') do
       db.execute("INSERT INTO User (username,pwdigest) VALUES (?,?)",username,password_digest)
       redirect('/')
     else
-       "Lösenorden matcher ej"
+       flash[:notice] = "Lösenorden matcher ej"
+       redirect('/register')
     end
 end
 
@@ -62,8 +70,8 @@ get('/schedules') do
     id = session[:id].to_i
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
-    result = db.execute("SELECT * FROM Schedule WHERE user_id = ?",id)
-    slim(:"schedules/index",locals:{schedules:result})
+    @result = db.execute("SELECT * FROM Schedule WHERE user_id = ?",id)
+    slim(:"schedules/index")
 end
 
 get('/schedules/new') do
@@ -99,16 +107,16 @@ get('/schedules/:id/edit') do
   id = params[:id].to_i
   db = SQLite3::Database.new("db/database.db")
   db.results_as_hash = true
-  result = db.execute("SELECT * FROM Schedule WHERE id = ?",id).first
-  slim(:"/schedules/edit",locals:{result:result})
+  @result = db.execute("SELECT * FROM Schedule WHERE id = ?",id).first
+  slim(:"/schedules/edit")
 end
 
 get('/schedules/:id') do
     id = params[:id].to_i
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
-    result = db.execute("SELECT * FROM Schedule WHERE id = ?",id).first
-    slim(:"schedules/show",locals:{result:result})
+    @result = db.execute("SELECT * FROM Schedule WHERE id = ?",id).first
+    slim(:"schedules/show")
 end
 
 
@@ -119,8 +127,8 @@ end
 get('/exercises') do
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
-    result = db.execute("SELECT * FROM Exercises")
-    slim(:"exercises/index",locals:{exercises:result})
+    @result = db.execute("SELECT * FROM Exercises")
+    slim(:"exercises/index")
 end
 
 get('/exercises/new') do
@@ -129,11 +137,9 @@ end
 
 post('/exercises/new') do
     exercise_name = params[:exercise_name]
-    muscle1_id = params[:muscle1_id].to_i #Skapa felhantering om man försöker sätta id = 0
-    muscle2_id = params[:muscle2_id].to_i
-    muscle3_id = params[:muscle3_id].to_i
+    muscle_id = params[:muscle_id].to_i #Skapa felhantering om man försöker sätta id = 0
     db = SQLite3::Database.new("db/database.db")
-    db.execute("INSERT INTO Exercises (exercise_name,muscle1_id,muscle2_id,muscle3_id) VALUES (?,?,?,?)",exercise_name,muscle1_id,muscle2_id,muscle3_id)
+    db.execute("INSERT INTO Exercises (exercise_name,muscle_id) VALUES (?,?)",exercise_name,muscle_id)
     redirect('/exercises')
 end
 
@@ -147,11 +153,9 @@ end
 post('/exercises/:id/update') do
     exercise_id = params[:id].to_i
     exercise_name = params[:exercise_name]
-    muscle1_id = params[:muscle1_id].to_i
-    muscle2_id = params[:muscle2_id].to_i
-    muscle3_id = params[:muscle3_id].to_i
+    muscle_id = params[:muscle_id].to_i
     db = SQLite3::Database.new("db/database.db")
-    db.execute("UPDATE Exercises SET exercise_name=?,muscle1_id=?,muscle2_id=?,muscle3_id=? WHERE exercise_id = ?", exercise_name,muscle1_id,muscle2_id,muscle3_id,exercise_id)
+    db.execute("UPDATE Exercises SET exercise_name=?,muscle_id=? WHERE exercise_id = ?", exercise_name,muscle_id,exercise_id)
     redirect('/exercises')
 end
 
@@ -159,19 +163,18 @@ get('/exercises/:id/edit') do
     exercise_id = params[:id].to_i
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
-    result = db.execute("SELECT * FROM Exercises WHERE exercise_id = ?",exercise_id).first
-    slim(:"/exercises/edit",locals:{result:result})
+    @result = db.execute("SELECT * FROM Exercises WHERE exercise_id = ?",exercise_id).first
+    slim(:"/exercises/edit")
 end
 
 get('/exercises/:id') do
     exercise_id = params[:id].to_i
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
-    result = db.execute("SELECT * FROM Exercises WHERE exercise_id = ?",exercise_id).first
-    result2 = db.execute("SELECT Name FROM MuscleTypes INNER JOIN Exercises ON Exercises.muscle1_id = MuscleTypes.id").first
-    result3 = db.execute("SELECT Name FROM MuscleTypes INNER JOIN Exercises ON Exercises.muscle2_id = MuscleTypes.id").first
-    result4 = db.execute("SELECT Name FROM MuscleTypes INNER JOIN Exercises ON Exercises.muscle3_id = MuscleTypes.id").first
-    #result3 = db.execute("SELECT Exercises.muscle1_id, Exercises.secondary_muscle_id, Exercises.third_muscle_id, FROM Exercises INNER JOIN MuscleTypes ON Exercises.id = ?",id)
-    slim(:"exercises/show",locals:{result:result, result2:result2, result3:result3, result4:result4})
+    @result = db.execute("SELECT * FROM Exercises WHERE exercise_id = ?",exercise_id).first
+    @result2 = db.execute("SELECT Exercises.exercise_name, MuscleTypes.Name FROM Exercises INNER JOIN MuscleTypes ON Exercises.muscle_id = MuscleTypes.id WHERE Exercises.exercise_id = ?",exercise_id).first
+    slim(:"exercises/show")
 end
-    
+
+
+
