@@ -1,0 +1,7 @@
+form method="post" action="/schedules/:id/add_exercise"
+  label for="exercise_id" Choose an exercise:
+  select name="exercise_id"
+    - @exercises.each do |exercise|
+      option value=exercise['exercise_id'] = exercise['exercise_name']
+  
+  input type="submit" value="Add Exercise"

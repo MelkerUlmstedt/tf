@@ -4,6 +4,7 @@ require 'sqlite3'
 require 'bcrypt'
 require 'sinatra/reloader'
 require 'sinatra/flash'
+require_relative './model.rb'
 
 enable :sessions
 
@@ -70,7 +71,7 @@ get('/schedules') do
     id = session[:id].to_i
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
-    @result = db.execute("SELECT * FROM Schedule WHERE user_id = ?",id)
+    @schedules = db.execute("SELECT * FROM Schedule WHERE user_id = ?",id)
     slim(:"schedules/index")
 end
 
@@ -78,7 +79,7 @@ get('/schedules/new') do
     slim(:"/schedules/new")
 end
 
-post('/schedules/new') do
+post('/schedules') do
     name = params[:name]
     user_id = session[:id].to_i
     p name
@@ -116,18 +117,34 @@ get('/schedules/:id') do
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
     @result = db.execute("SELECT * FROM Schedule WHERE id = ?",id).first
+    @result2 = db.execute("SELECT Exercises.exercise_name FROM Exercises INNER JOIN exe_sch_rel ON Exercises.exercise_id = exe_sch_rel.exercise_id INNER JOIN Schedule ON exe_sch_rel.schedule_id = Schedule.id WHERE Schedule.id = ?",id)
     slim(:"schedules/show")
 end
 
+#Add exercises to schedules
+get('/schedules/:id/add_exercise') do
+    db = SQLite3::Database.new("db/database.db")
+    db.results_as_hash = true
+    schedule_id = params[:id].to_i
+    @exercises = db.execute("SELECT exercise_id, exercise_name FROM Exercises")
+    slim(:"schedules/add_exercise")
+end
+###INTE KLAR ÄN!!!"!"!"!!"!!k
 
-
+post('/schedules/:id/add_exercise') do
+    exercise_id = params[:exercise_id].to_i
+    schedule_id = params[:id].to_i
+    db = SQLite3::Database.new("db/database.db")
+    db.execute("INSERT INTO exe_sch_rel (schedule_id, exercise_id) VALUES (?, ?)",schedule_id,exercise_id)
+    redirect("/schedules/#{schedule_id}")
+end
 
 
 #Exercises
 get('/exercises') do
     db = SQLite3::Database.new("db/database.db")
     db.results_as_hash = true
-    @result = db.execute("SELECT * FROM Exercises")
+    @exercises = db.execute("SELECT * FROM Exercises")
     slim(:"exercises/index")
 end
 
@@ -135,7 +152,7 @@ get('/exercises/new') do
     slim(:"/exercises/new")
 end
 
-post('/exercises/new') do
+post('/exercises') do
     exercise_name = params[:exercise_name]
     muscle_id = params[:muscle_id].to_i #Skapa felhantering om man försöker sätta id = 0
     db = SQLite3::Database.new("db/database.db")

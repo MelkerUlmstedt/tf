@@ -3,7 +3,7 @@ h1 Your Schedules
 a href="/schedules/new" Create New Schedule
 
 ol
-  - @result.each do |schedules|
+  - @schedules.each do |schedules|
     li 
       a href="schedules/#{schedules['id']}" #{schedules["name"]}
       a href="schedules/#{schedules['id']}/edit" Edit Schedule

@@ -1,5 +1,10 @@
-h1 = @result
-
-
-p Schemat heter #{@result["name"]}.
+h2 Schemat "#{@result["name"]}"
 p Id:t av schemat är #{@result["id"]}.
+p user:idt av schemat är #{@result['user_id']}
+
+a href="/schedules/#{@result['id']}/add_exercise" Add exercises
+h3 Övningar i schemat:
+ol
+    - @result2.each do |exercise|
+        li 
+            a href="exercises/#{exercise['exercise_id']}" #{exercise["exercise_name"]}
