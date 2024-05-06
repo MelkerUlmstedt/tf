@@ -1,10 +1,12 @@
-h2 Schemat "#{@result["name"]}"
-p Id:t av schemat är #{@result["id"]}.
-p user:idt av schemat är #{@result['user_id']}
+h2 Schedule "#{@result["name"]}"
+p ID of the schedule #{@result["id"]}.
+p User:id is #{@result['user_id']}
 
 a href="/schedules/#{@result['id']}/add_exercise" Add exercises
-h3 Övningar i schemat:
+h3 Exercises:
 ol
     - @result2.each do |exercise|
         li 
-            a href="exercises/#{exercise['exercise_id']}" #{exercise["exercise_name"]}
+            a href="../exercises/#{exercise['exercise_id']}" #{exercise["exercise_name"]}
+            form method="POST" action="#{@result['id']}/#{exercise['exercise_id']}/delete"
+                input type="submit" value="Remove"

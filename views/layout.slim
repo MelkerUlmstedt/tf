@@ -8,10 +8,15 @@ html lang="en"
   body
     h1 Welcome to Gym something!
     nav
-      a href="/main" something
+      -if session[:id] == nil
+        a href="/" Log In
+      -if session[:id] != nil
+        a href="/main" Main
       a href="/exercises" övningar
-      a href="/schedules" Dina scheman
-      a href="/" Log Out
+      -if session[:id] != nil
+        a href="/schedules" Dina scheman
+        form method="POST" action="/logout"
+          input type="submit" value="Log Out"
     
     -if flash[:notice] 
       p.notice = flash[:notice]

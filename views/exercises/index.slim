@@ -1,13 +1,16 @@
 h1 All Exercises
 
-a href="/exercises/new" Add new exercises
+- if logged_in()
+  a href="/exercises/new" Add new exercises
 
 ol
   - @exercises.each do |exercises|
     li 
       a href="exercises/#{exercises['exercise_id']}" #{exercises["exercise_name"]}
-      a href="exercises/#{exercises['exercise_id']}/edit" Edit
-      form method="POST" action="/exercises/#{exercises['exercise_id']}/delete"
-        input type="submit" value="Delete"
-      
+      - if logged_in()
+        - if is_admin()
+          a href="exercises/#{exercises['exercise_id']}/edit" Edit
+          form method="POST" action="/exercises/#{exercises['exercise_id']}/delete"
+            input type="submit" value="Delete"
+          
             
