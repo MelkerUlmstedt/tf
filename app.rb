@@ -8,12 +8,17 @@ require_relative './model.rb'
 
 enable :sessions
 
-include Model
+include Model # Wat dis?
 
+# Connect to database
+#
+# @see Model#connect_database
 before do
     $db = connect_database()
 end
 
+# Displays an error message
+#
 get('/error') do
     slim(:error)
 end
@@ -30,6 +35,9 @@ get('/register') do
     slim(:"/user/new")
 end
 
+# Displays Landing Page
+#
+# @see Model#main
 get('/main') do
     id = session[:id].to_i
     main(id)
@@ -48,15 +56,24 @@ post('/login') do
     login_authentication(username, password)
 end
 
+# Attempts logout and updates the session 
+#
 post('/logout') do
     session[:id] = nil
     redirect('/')
 end
 
+# Attempts login and updates the session
+#
+# @param [String] username, The username
+# @param [String] password, The password
+# @param [String] repeat-password, The repeated password
+#
+# @see Model#register_authentication
 post('/users/new') do
     username = params[:username]
-    password_confirm = params[:password_confirm]
     password = params[:password]
+    password_confirm = params[:password_confirm]
 
     validator(username)
     validator(password)
@@ -66,6 +83,7 @@ end
 
 # Check if user is logged in before accessing schedules
 #
+# @see Model#logged_in
 before('/schedules*') do
     if logged_in() == false
         redirect('/error')
@@ -74,6 +92,7 @@ end
 
 # Displays a list of all your schedules
 #
+# @see Model#schedules_index
 get('/schedules') do
     id = session[:id].to_i
     schedules_index(id)
@@ -126,6 +145,7 @@ end
 # Displays a form for editing a schedule
 #
 # @param [Integer] id, The id of the schedule
+#
 # @see Model#schedule_edit
 get('/schedules/:id/edit') do
   id = params[:id].to_i
@@ -133,9 +153,24 @@ get('/schedules/:id/edit') do
   slim(:"/schedules/edit")
 end
 
+# Check if user has permissions to access specific schedules as well as if the route is a schedule
+#
+# @param [Integer] id, The id of the schedule
+#
+# @see Model#permission
+before('/schedules/:id*') do
+    id = params[:id].to_i
+    if id != 0
+        if permission(id) == false
+            redirect('/error')
+        end
+    end
+end
+
 # Displays a specific schedule
 #
 # @param [Integer] id, The id of the schedule
+#
 # @see Model#schedule_show
 get('/schedules/:id') do
     id = params[:id].to_i
@@ -143,19 +178,36 @@ get('/schedules/:id') do
     slim(:"schedules/show")
 end
 
+# Displays a form for adding an exercise to a schedule
+#
+# @param [Integer] id, The id of the schedule
+#
+# @see Model#add_exercise_to_schedule
 get('/schedules/:id/add_exercise') do
     schedule_id = params[:id].to_i
     add_exercise_to_schedule(schedule_id)
     slim(:"schedules/add_exercise")
 end
 
+# Attempts to add a new exercise to a schedule
+#
+# @param [Integer] id, The id of the schedule
+# @param [Integer] id, The id of the exercise
+#
+# @see Model#execute_add_exercise_to_schedule
 post('/schedules/:id/add_exercise') do
     schedule_id = params[:id].to_i
     exercise_id = params[:exercise_id].to_i
     execute_add_exercise_to_schedule(schedule_id,exercise_id)
     redirect("/schedules/#{schedule_id}")
 end
-  
+
+# Attempts to delete an exercise from a schedule
+#
+# @param [Integer] id, The id of the exercise
+# @param [Integer] id, The id of the schedule
+#
+# @see Model#delete_exercise_from_schedule
 post('/schedules/:schedule_id/:exercise_id/delete') do
     schedule_id = params[:schedule_id].to_i
     exercise_id = params[:exercise_id].to_i
@@ -163,20 +215,31 @@ post('/schedules/:schedule_id/:exercise_id/delete') do
     redirect("/schedules/#{schedule_id}")
 end
 
+# Check if user is logged in before creating new exercise
+#
+# @see Model#logged_in
 before('/exercises/new') do
     if logged_in() == false
         redirect('/error')
     end
 end
 
+# Check if user is logged in before updating exercise
+#
+# @see Model#logged_in
+# @see Model#is_admin
 before('/exercises/:id/*') do
     if logged_in() == false
+        redirect('/error')
+    end
+    if is_admin() == false
         redirect('/error')
     end
 end
 
 # Displays a list of all exercises
 #
+# @see Model#exercises_index
 get('/exercises') do
     exercises_index()
     slim(:"exercises/index")
@@ -194,16 +257,18 @@ end
 # @param [Integer] id, The id of the muscletype
 #
 # @see Model#exercises_new
+# @see Model#exercise_validator
+# @see Model#muscle_exercise_validator
 post('/exercises') do
     exercise_name = params[:exercise_name]
     exercise_validator(exercise_name)
     muscle_id = params[:muscle_id].to_i 
-    password_exercise_validator(muscle_id)
+    muscle_exercise_validator(muscle_id)
     exercises_new(exercise_name,muscle_id)
     redirect('/exercises')
 end
 
-# Attempts to delete a exercise
+# Attempts to delete an exercise
 #
 # @param [Integer] id, The id of the exercise
 #
@@ -214,7 +279,7 @@ post('/exercises/:id/delete') do
     redirect('/exercises')
 end
 
-# Attempts to update a exercise
+# Attempts to update an exercise
 #
 # @param [Integer] id, The id of the exercise
 # @param [String] name, The name of the exercise
@@ -229,9 +294,10 @@ post('/exercises/:id/update') do
     redirect('/exercises')
 end
 
-# Displays a form for editing a exercise
+# Displays a form for editing an exercise
 #
 # @param [Integer] id, The id of the exercise
+#
 # @see Model#exercises_edit
 get('/exercises/:id/edit') do
     exercise_id = params[:id].to_i
