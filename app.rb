@@ -44,7 +44,7 @@ get('/main') do
     slim(:index)
 end
 
-# Attempts login and updates the session
+# Attempts login and updates the session, as well as creating user cooldown
 #
 # @param [String] username, The username
 # @param [String] password, The password
@@ -53,7 +53,30 @@ end
 post('/login') do
     username = params[:username]
     password = params[:password]
-    login_authentication(username, password)
+    
+    if session[:last_login_attempt] && Time.now - session[:last_login_attempt] < 5
+        flash[:notice] = "Please wait for 5 seconds after multiple failed login attempts."
+        redirect('/')
+    end
+    
+    user_id = login_authentication(username, password)
+
+    if user_id
+        session[:id] = user_id
+        session[:login_attempts] = 0
+        redirect('/main')
+    else
+        session[:login_attempts] ||= 0
+        session[:login_attempts] += 1
+        if session[:login_attempts] >= 3
+            session[:last_login_attempt] = Time.now
+            flash[:notice] = "Too many failed attempts. Please wait for 5 seconds."
+            session[:login_attempts] = 0
+        else
+            flash[:notice] = "Invalid username or password."
+        end
+        redirect('/')
+    end
 end
 
 # Attempts logout and updates the session 
@@ -85,6 +108,15 @@ end
 #
 # @see Model#logged_in
 before('/schedules*') do
+    if logged_in() == false
+        redirect('/error')
+    end
+end
+
+# Check if user is logged in before accessing main site
+#
+# @see Model#logged_in
+before('/main') do
     if logged_in() == false
         redirect('/error')
     end

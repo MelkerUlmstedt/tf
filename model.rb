@@ -64,23 +64,16 @@ module Model
     # @param password [String] The password of the user trying to log in
     #
     # @return [void] Redirects based on login success or failure
-    #   * :message [String] the error message if password is wrong
     def login_authentication(username, password)
-        result = $db.execute("SELECT * FROM User WHERE username = ?",username).first
-        if result == nil
-            flash[:notice] = "Användarnamnet existerar ej"
-            redirect('/')
-        else
-            pwdigest = result["pwdigest"]
-            id = result["user_id"]
-            if BCrypt::Password.new(pwdigest) == password
-            session[:id] = id
-            redirect('/main')
-            else
-                flash[:notice] = "Fel lösenord"
-                redirect('/')
-            end
+        result = $db.execute("SELECT * FROM User WHERE username = ?", username).first
+        return nil if result.nil?
+
+        pwdigest = result["pwdigest"]
+        if BCrypt::Password.new(pwdigest) == password
+            return result["user_id"]
         end
+
+        nil 
     end
 
     # Attempts to retrieve the main user details
@@ -275,5 +268,6 @@ module Model
         @result = $db.execute("SELECT user_id FROM Schedule WHERE id = ?",id).first
         return @result["user_id"] == user
     end
+    
     
 end
